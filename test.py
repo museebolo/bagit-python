@@ -1011,6 +1011,35 @@ Tag-File-Character-Encoding: UTF-8
 
         self.assertEqual("Unsupported encoding: WTF-8", str(error_catcher.exception))
 
+    def test_update_payload_added_file(self):
+        bag = bagit.make_bag(self.tmpdir)
+        self.assertTrue(bag.is_valid())
+
+        with open(j(self.tmpdir, "data", "newfile"), "w") as nf:
+            nf.write("newfile")
+
+        bag = bagit.Bag(self.tmpdir)
+        self.assertFalse(bag.is_valid())
+
+        bag.update_payload()
+
+        bag = bagit.Bag(self.tmpdir)
+        self.assertTrue(bag.is_valid())
+
+    def test_update_payload_deleted_file(self):
+        bag = bagit.make_bag(self.tmpdir)
+        self.assertTrue(bag.is_valid())
+
+        os.remove(j(self.tmpdir, "data", "loc", "2478433644_2839c5e8b8_o_d.jpg"))
+
+        bag = bagit.Bag(self.tmpdir)
+        self.assertFalse(bag.is_valid())
+
+        bag.update_payload()
+
+        bag = bagit.Bag(self.tmpdir)
+        self.assertTrue(bag.is_valid())
+
 
 class TestFetch(SelfCleaningTestCase):
     def setUp(self):
