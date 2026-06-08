@@ -814,6 +814,17 @@ class Bag(object):
 
         self._validate_entries(processes)
 
+    def payload_oxum(self):
+        total_bytes = 0
+        total_files = 0
+
+        for payload_file in self.payload_files():
+            payload_file = os.path.join(self.path, payload_file)
+            total_bytes += os.stat(payload_file).st_size
+            total_files += 1
+
+        return total_bytes, total_files
+
     def _validate_oxum(self):
         oxum = self.info.get("Payload-Oxum")
 
@@ -833,13 +844,16 @@ class Bag(object):
 
         oxum_byte_count = int(oxum_byte_count)
         oxum_file_count = int(oxum_file_count)
-        total_bytes = 0
-        total_files = 0
 
-        for payload_file in self.payload_files():
-            payload_file = os.path.join(self.path, payload_file)
-            total_bytes += os.stat(payload_file).st_size
-            total_files += 1
+        total_bytes, total_files = self.payload_oxum()
+
+        #total_bytes = 0
+        #total_files = 0
+        #
+        #for payload_file in self.payload_files():
+        #    payload_file = os.path.join(self.path, payload_file)
+        #    total_bytes += os.stat(payload_file).st_size
+        #    total_files += 1
 
         if oxum_file_count != total_files or oxum_byte_count != total_bytes:
             raise BagValidationError(
