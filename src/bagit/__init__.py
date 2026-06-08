@@ -537,6 +537,12 @@ class Bag(object):
 
         os.chdir(old_dir)
 
+    def update_payload(self, processes=1):
+        """
+        Rebuild payload manifests and tag manifests after payload changes.
+        """
+        self.save(processes=processes, manifests=True)
+
     def tagfile_entries(self):
         return dict(
             (key, value)
