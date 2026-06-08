@@ -1053,6 +1053,89 @@ Tag-File-Character-Encoding: UTF-8
         bag = bagit.Bag(self.tmpdir)
         self.assertEqual(bag.payload_oxum(), (991772, 6))
 
+    def test_add_payload(self):
+        bag = bagit.make_bag(self.tmpdir)
+
+        extra = os.path.join(self.tmpdir, "extra.txt")
+
+        with open(extra, "w") as f:
+            f.write("hello world")
+
+        bag.add_payload(extra)
+
+        bag = bagit.Bag(self.tmpdir)
+
+        self.assertTrue(
+            os.path.isfile(
+                os.path.join(self.tmpdir, "data", "extra.txt")
+            )
+        )
+        self.assertTrue(bag.is_valid())
+
+    def test_add_payload_updates_oxum(self):
+        bag = bagit.make_bag(self.tmpdir)
+
+        old_bytes, old_files = bag.payload_oxum()
+
+        extra = os.path.join(self.tmpdir, "extra.txt")
+
+        with open(extra, "w") as f:
+            f.write("hello")
+
+        bag.add_payload(extra)
+
+        bag = bagit.Bag(self.tmpdir)
+
+        new_bytes, new_files = bag.payload_oxum()
+
+        self.assertEqual(new_files, old_files + 1)
+        self.assertEqual(new_bytes, old_bytes + 5)
+
+        self.assertTrue(bag.is_valid())
+
+    def test_add_payload_missing_file(self):
+        bag = bagit.make_bag(self.tmpdir)
+
+        with self.assertRaises(ValueError):
+            bag.add_payload("/does/not/exist")
+
+    def test_remove_payload(self):
+        bag = bagit.make_bag(self.tmpdir)
+
+        payload_file = "data/README"
+        full_path = j(self.tmpdir, payload_file)
+
+        self.assertTrue(os.path.isfile(full_path))
+
+        bag.remove_payload(payload_file)
+
+        bag = bagit.Bag(self.tmpdir)
+
+        self.assertFalse(os.path.exists(full_path))
+        self.assertTrue(bag.is_valid())
+
+    def test_remove_payload_updates_oxum(self):
+        bag = bagit.make_bag(self.tmpdir)
+
+        old_bytes, old_files = bag.payload_oxum()
+        removed_size = os.stat(j(self.tmpdir, "data", "README")).st_size
+
+        bag.remove_payload("data/README")
+
+        bag = bagit.Bag(self.tmpdir)
+
+        new_bytes, new_files = bag.payload_oxum()
+
+        self.assertEqual(new_files, old_files - 1)
+        self.assertEqual(new_bytes, old_bytes - removed_size)
+
+    def test_remove_payload_rejects_non_payload_path(self):
+        bag = bagit.make_bag(self.tmpdir)
+
+        with self.assertRaises(ValueError):
+            bag.remove_payload("bag-info.txt")
+
+
 class TestFetch(SelfCleaningTestCase):
     def setUp(self):
         super(TestFetch, self).setUp()
