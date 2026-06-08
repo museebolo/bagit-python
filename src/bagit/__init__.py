@@ -10,6 +10,7 @@ import multiprocessing
 import os
 import re
 import signal
+import shutil
 import sys
 import tempfile
 import time
@@ -537,11 +538,48 @@ class Bag(object):
 
         os.chdir(old_dir)
 
+
     def update_payload(self, processes=1):
         """
         Rebuild payload manifests and tag manifests after payload changes.
         """
         self.save(processes=processes, manifests=True)
+
+
+    def add_payload(self, src, processes=1):
+        """
+        Copy a file into the payload directory and rebuild manifests.
+        """
+        if not os.path.isfile(src):
+            raise ValueError("Payload source must be a file: %s" % src)
+
+        dst = os.path.join(
+            self.path,
+            "data",
+            os.path.basename(src),
+        )
+
+        shutil.copy2(src, dst)
+
+        self.update_payload(processes=processes)
+
+
+    def remove_payload(self, path, processes=1):
+        """
+        Remove a payload file and rebuild manifests.
+        """
+        payload_path = os.path.join(self.path, path)
+
+        if not path.startswith("data" + os.sep):
+            raise ValueError("Payload path must start with data/: %s" % path)
+
+        if not os.path.isfile(payload_path):
+            raise ValueError("Payload path must be a file: %s" % path)
+
+        os.remove(payload_path)
+
+        self.update_payload(processes=processes)
+
 
     def tagfile_entries(self):
         return dict(
