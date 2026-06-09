@@ -550,13 +550,13 @@ class Bag(object):
         """
         Copy a file into the payload directory and rebuild manifests.
         """
-        if not os.path.isfile(src):
-            raise ValueError("Payload source must be a file: %s" % src)
+        if not os.path.isfile(src) and not os.path.isdir(src):
+            raise ValueError("Payload source must be a file or directory: %s" % src)
 
         if dest is None:
             dest = os.path.basename(src)
 
-        payload_dest = os.path.normpath(dest)
+        dest = os.path.normpath(dest)
 
         if os.path.isabs(dest) or dest.startswith("..") or os.path.expanduser(dest) != dest:
             raise ValueError("Payload destination is unsafe: %s" % dest)
@@ -567,12 +567,19 @@ class Bag(object):
             raise ValueError("Payload destination is unsafe: %s" % dest)
 
         dst = os.path.join(self.path, payload_dest)
-        dst_dir = os.path.dirname(dst)
 
-        if not os.path.isdir(dst_dir):
-            os.makedirs(dst_dir)
+        if os.path.isfile(src):
+            dst_dir = os.path.dirname(dst)
+            if not os.path.isdir(dst_dir):
+                os.makedirs(dst_dir)
 
-        shutil.copy2(src, dst)
+            shutil.copy2(src, dst)
+
+        elif os.path.isdir(src):
+            if os.path.exists(dst):
+                raise ValueError("Payload destination already exists: %s" % dest)
+
+            shutil.copytree(src, dst)
 
         self.update_payload(processes=processes)
 

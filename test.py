@@ -1209,6 +1209,49 @@ Tag-File-Character-Encoding: UTF-8
         with self.assertRaises(ValueError):
             bag.remove_payload("data/extra")
 
+    def test_add_payload_directory(self):
+        bag = bagit.make_bag(self.tmpdir)
+
+        src_dir = tempfile.mkdtemp()
+        try:
+            with open(j(src_dir, "one.txt"), "w") as f:
+                f.write("one")
+
+            os.mkdir(j(src_dir, "nested"))
+
+            with open(j(src_dir, "nested", "two.txt"), "w") as f:
+                f.write("two")
+
+            bag.add_payload(src_dir)
+
+            dest_dir = j(self.tmpdir, "data", os.path.basename(src_dir))
+
+            self.assertTrue(os.path.isdir(dest_dir))
+            self.assertTrue(os.path.isfile(j(dest_dir, "one.txt")))
+            self.assertTrue(os.path.isfile(j(dest_dir, "nested", "two.txt")))
+
+            bag = bagit.Bag(self.tmpdir)
+            self.assertTrue(bag.is_valid())
+        finally:
+            shutil.rmtree(src_dir)
+
+    def test_add_payload_directory_with_destination(self):
+        bag = bagit.make_bag(self.tmpdir)
+
+        src_dir = tempfile.mkdtemp()
+        try:
+            with open(j(src_dir, "one.txt"), "w") as f:
+                f.write("one")
+
+            bag.add_payload(src_dir, "imports/sip")
+
+            self.assertTrue(os.path.isdir(j(self.tmpdir, "data", "imports", "sip")))
+            self.assertTrue(os.path.isfile(j(self.tmpdir, "data", "imports", "sip", "one.txt")))
+
+            bag = bagit.Bag(self.tmpdir)
+            self.assertTrue(bag.is_valid())
+        finally:
+            shutil.rmtree(src_dir)
 
 
 class TestFetch(SelfCleaningTestCase):
