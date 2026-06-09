@@ -1253,6 +1253,14 @@ Tag-File-Character-Encoding: UTF-8
         finally:
             shutil.rmtree(src_dir)
 
+    def test_convert_directory(self):
+        bag = bagit.Bag.convert_directory(self.tmpdir, checksums=["md5"])
+
+        self.assertIsInstance(bag, bagit.Bag)
+        self.assertTrue(os.path.isdir(j(self.tmpdir, "data")))
+        self.assertTrue(os.path.isfile(j(self.tmpdir, "bagit.txt")))
+        self.assertTrue(bag.is_valid())
+
 
 class TestFetch(SelfCleaningTestCase):
     def setUp(self):

@@ -609,6 +609,15 @@ class Bag(object):
 
         self.update_payload(processes=processes)
 
+    @classmethod
+    def convert_directory(cls, path, **kwargs):
+        """
+        Convert a directory into a bag in place.
+
+        This is a compatibility wrapper around make_bag().
+        """
+        return make_bag(path, **kwargs)
+
     def tagfile_entries(self):
         return dict(
             (key, value)
