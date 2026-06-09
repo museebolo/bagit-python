@@ -577,22 +577,30 @@ class Bag(object):
         self.update_payload(processes=processes)
 
 
-    def remove_payload(self, path, processes=1):
+    def remove_payload(self, path, processes=1, recursive=False):
         """
         Remove a payload file and rebuild manifests.
         """
-        payload_path = os.path.join(self.path, path)
+        payload_path = os.path.normpath(path)
 
-        if not path.startswith("data" + os.sep):
+        if self._path_is_dangerous(payload_path):
+            raise ValueError("Payload path is unsafe: %s" % path)
+
+        if not payload_path.startswith("data" + os.sep):
             raise ValueError("Payload path must start with data/: %s" % path)
 
-        if not os.path.isfile(payload_path):
-            raise ValueError("Payload path must be a file: %s" % path)
+        full_path = os.path.join(self.path, payload_path)
 
-        os.remove(payload_path)
+        if os.path.isfile(full_path):
+            os.remove(full_path)
+        elif os.path.isdir(full_path):
+            if not recursive:
+                raise ValueError("Payload path is a directory: %s" % path)
+            shutil.rmtree(full_path)
+        else:
+            raise ValueError("Payload path does not exist: %s" % path)
 
         self.update_payload(processes=processes)
-
 
     def tagfile_entries(self):
         return dict(
