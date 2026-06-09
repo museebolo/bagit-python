@@ -1135,6 +1135,49 @@ Tag-File-Character-Encoding: UTF-8
         with self.assertRaises(ValueError):
             bag.remove_payload("bag-info.txt")
 
+    def test_add_payload_with_destination(self):
+        bag = bagit.make_bag(self.tmpdir)
+
+        extra = os.path.join(self.tmpdir, "extra.txt")
+        with open(extra, "w") as f:
+            f.write("hello")
+
+        bag.add_payload(extra, "masters/extra.txt")
+
+        self.assertTrue(os.path.isfile(j(self.tmpdir, "data", "masters", "extra.txt")))
+
+        bag = bagit.Bag(self.tmpdir)
+        self.assertTrue(bag.is_valid())
+
+    def test_add_payload_rejects_unsafe_destination(self):
+        bag = bagit.make_bag(self.tmpdir)
+
+        extra = os.path.join(self.tmpdir, "extra.txt")
+        with open(extra, "w") as f:
+            f.write("hello")
+
+        unsafe_destinations = [
+            "../extra.txt",
+            "subdir/../../extra.txt",
+            "/tmp/extra.txt",
+            "~/.ssh/id_rsa",
+        ]
+
+        if os.name == "nt":
+            unsafe_destinations.extend(
+                [
+                    r"..\extra.txt",
+                    r"subdir\..\..\extra.txt",
+                    r"C:\Windows\system32\cmd.exe",
+                    r"\\server\share\file.txt",
+                ]
+            )
+
+        for dest in unsafe_destinations:
+            with self.subTest(dest=dest):
+                with self.assertRaises(ValueError):
+                    bag.add_payload(extra, "../extra.txt")
+
 
 class TestFetch(SelfCleaningTestCase):
     def setUp(self):
