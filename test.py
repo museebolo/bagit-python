@@ -1178,6 +1178,38 @@ Tag-File-Character-Encoding: UTF-8
                 with self.assertRaises(ValueError):
                     bag.add_payload(extra, "../extra.txt")
 
+    def test_remove_payload_directory_recursive(self):
+        bag = bagit.make_bag(self.tmpdir)
+
+        payload_dir = j(self.tmpdir, "data", "extra")
+        os.makedirs(payload_dir)
+
+        with open(j(payload_dir, "one.txt"), "w") as f:
+            f.write("one")
+
+        with open(j(payload_dir, "two.txt"), "w") as f:
+            f.write("two")
+
+        bag.update_payload()
+        self.assertTrue(bag.is_valid())
+
+        bag.remove_payload("data/extra", recursive=True)
+
+        bag = bagit.Bag(self.tmpdir)
+
+        self.assertFalse(os.path.exists(payload_dir))
+        self.assertTrue(bag.is_valid())
+
+    def test_remove_payload_directory_requires_recursive(self):
+        bag = bagit.make_bag(self.tmpdir)
+
+        payload_dir = j(self.tmpdir, "data", "extra")
+        os.makedirs(payload_dir)
+
+        with self.assertRaises(ValueError):
+            bag.remove_payload("data/extra")
+
+
 
 class TestFetch(SelfCleaningTestCase):
     def setUp(self):
