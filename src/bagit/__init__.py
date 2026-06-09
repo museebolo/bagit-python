@@ -625,6 +625,27 @@ class Bag(object):
             if not key.startswith("data" + os.sep)
         )
 
+    def package_as_tar(self, tarpath, compression="gz"):
+        from .packaging import BagPackager
+
+        return BagPackager(self).package_as_tar(tarpath, compression=compression)
+
+    def package_as_tarstream(self, fobj, compression=None):
+        from .packaging import BagPackager
+
+        return BagPackager(self).package_as_tarstream(fobj, compression=compression)
+
+    def package_as_zip(self, zippath, compression="deflate"):
+        from .packaging import BagPackager
+
+        return BagPackager(self).package_as_zip(zippath, compression=compression)
+
+    def package_as_zipstream(self, compression="deflate"):
+        from .packaging import BagPackager
+
+        return BagPackager(self).package_as_zipstream(compression=compression)
+
+
     def missing_optional_tagfiles(self):
         """
         From v0.97 we need to validate any tagfiles listed

@@ -1261,6 +1261,198 @@ Tag-File-Character-Encoding: UTF-8
         self.assertTrue(os.path.isfile(j(self.tmpdir, "bagit.txt")))
         self.assertTrue(bag.is_valid())
 
+    def test_package_as_tar(self):
+        bag = bagit.make_bag(self.tmpdir)
+
+        tar_path = tempfile.mktemp(suffix=".tar")
+
+        try:
+            bag.package_as_tar(tar_path, compression=None)
+
+            self.assertTrue(os.path.isfile(tar_path))
+
+            import tarfile
+
+            with tarfile.open(tar_path, "r") as tf:
+                names = tf.getnames()
+
+            self.assertTrue(any(name.endswith("bagit.txt") for name in names))
+
+        finally:
+            if os.path.exists(tar_path):
+                os.remove(tar_path)
+
+    def test_package_as_tar_gz(self):
+        bag = bagit.make_bag(self.tmpdir)
+
+        tar_path = tempfile.mktemp(suffix=".tar.gz")
+
+        try:
+            bag.package_as_tar(tar_path, compression="gz")
+
+            self.assertTrue(os.path.isfile(tar_path))
+
+            import tarfile
+
+            with tarfile.open(tar_path, "r:gz") as tf:
+                names = tf.getnames()
+
+            self.assertTrue(any(name.endswith("bagit.txt") for name in names))
+
+        finally:
+            if os.path.exists(tar_path):
+                os.remove(tar_path)
+
+    def test_package_as_tarstream(self):
+        bag = bagit.make_bag(self.tmpdir)
+
+        tar_path = tempfile.mktemp(suffix=".tar")
+
+        try:
+            with open(tar_path, "wb") as f:
+                bag.package_as_tarstream(f)
+
+            import tarfile
+
+            with tarfile.open(tar_path, "r") as tf:
+                names = tf.getnames()
+
+            self.assertTrue(any(name.endswith("bagit.txt") for name in names))
+
+        finally:
+            if os.path.exists(tar_path):
+                os.remove(tar_path)
+
+    def test_package_as_tarstream_gz(self):
+        bag = bagit.make_bag(self.tmpdir)
+
+        tar_path = tempfile.mktemp(suffix=".tar.gz")
+
+        try:
+            with open(tar_path, "wb") as fp:
+                bag.package_as_tarstream(fp, compression="gz")
+
+            import tarfile
+
+            with tarfile.open(tar_path, "r:gz") as tf:
+                names = tf.getnames()
+
+            self.assertTrue(any(name.endswith("bagit.txt") for name in names))
+
+        finally:
+            if os.path.exists(tar_path):
+                os.remove(tar_path)
+
+    def test_package_as_tar_invalid_compression(self):
+        bag = bagit.make_bag(self.tmpdir)
+
+        with self.assertRaises(ValueError):
+            bag.package_as_tar(
+                tempfile.mktemp(),
+                compression="foobar",
+            )
+
+    def test_package_as_zip(self):
+        bag = bagit.make_bag(self.tmpdir)
+
+        zip_path = tempfile.mktemp(suffix=".zip")
+
+        try:
+            bag.package_as_zip(zip_path)
+
+            import zipfile
+
+            with zipfile.ZipFile(zip_path) as zf:
+                names = zf.namelist()
+
+            self.assertTrue(any(name.endswith("bagit.txt") for name in names))
+        finally:
+            if os.path.exists(zip_path):
+                os.remove(zip_path)
+
+    def test_package_as_zip_store(self):
+        bag = bagit.make_bag(self.tmpdir)
+
+        zip_path = tempfile.mktemp(suffix=".zip")
+
+        try:
+            bag.package_as_zip(zip_path, compression="store")
+
+            import zipfile
+
+            with zipfile.ZipFile(zip_path) as zf:
+                names = zf.namelist()
+
+            self.assertTrue(any(name.endswith("bagit.txt") for name in names))
+        finally:
+            if os.path.exists(zip_path):
+                os.remove(zip_path)
+
+    def test_package_as_zip_invalid_compression(self):
+        bag = bagit.make_bag(self.tmpdir)
+
+        with self.assertRaises(ValueError):
+            bag.package_as_zip(tempfile.mktemp(), compression="foobar")
+
+    def test_package_as_zipstream(self):
+        bag = bagit.make_bag(self.tmpdir)
+
+        try:
+            zstream = bag.package_as_zipstream()
+        except RuntimeError:
+            self.skipTest("zipstream is not installed")
+
+        self.assertIsNotNone(zstream)
+        self.assertTrue(hasattr(zstream, "__iter__"))
+
+    def test_package_as_zipstream_generates_valid_zip(self):
+        bag = bagit.make_bag(self.tmpdir)
+
+        try:
+            zstream = bag.package_as_zipstream()
+        except RuntimeError:
+            self.skipTest("zipstream is not installed")
+
+        zip_path = tempfile.mktemp(suffix=".zip")
+
+        try:
+            with open(zip_path, "wb") as fp:
+                for chunk in zstream:
+                    fp.write(chunk)
+
+            import zipfile
+
+            with zipfile.ZipFile(zip_path) as zf:
+                names = zf.namelist()
+
+            self.assertTrue(any(name.endswith("bagit.txt") for name in names))
+
+        finally:
+            if os.path.exists(zip_path):
+                os.remove(zip_path)
+
+    def test_package_as_zipstream_invalid_compression(self):
+        bag = bagit.make_bag(self.tmpdir)
+
+        import importlib.util
+
+        if importlib.util.find_spec("zipstream") is None:
+            self.skipTest("zipstream is not installed")
+
+        with self.assertRaises(ValueError):
+            bag.package_as_zipstream(compression="foobar")
+
+    def test_package_as_zipstream_has_paths_to_write(self):
+        bag = bagit.make_bag(self.tmpdir)
+
+        try:
+            zstream = bag.package_as_zipstream()
+        except RuntimeError:
+            self.skipTest("zipstream is not installed")
+
+        self.assertTrue(hasattr(zstream, "paths_to_write"))
+        self.assertGreater(len(zstream.paths_to_write), 0)
+
 
 class TestFetch(SelfCleaningTestCase):
     def setUp(self):
