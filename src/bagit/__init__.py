@@ -546,18 +546,31 @@ class Bag(object):
         self.save(processes=processes, manifests=True)
 
 
-    def add_payload(self, src, processes=1):
+    def add_payload(self, src, dest=None, processes=1):
         """
         Copy a file into the payload directory and rebuild manifests.
         """
         if not os.path.isfile(src):
             raise ValueError("Payload source must be a file: %s" % src)
 
-        dst = os.path.join(
-            self.path,
-            "data",
-            os.path.basename(src),
-        )
+        if dest is None:
+            dest = os.path.basename(src)
+
+        payload_dest = os.path.normpath(dest)
+
+        if os.path.isabs(dest) or dest.startswith("..") or os.path.expanduser(dest) != dest:
+            raise ValueError("Payload destination is unsafe: %s" % dest)
+
+        payload_dest = os.path.join("data", dest)
+
+        if self._path_is_dangerous(payload_dest):
+            raise ValueError("Payload destination is unsafe: %s" % dest)
+
+        dst = os.path.join(self.path, payload_dest)
+        dst_dir = os.path.dirname(dst)
+
+        if not os.path.isdir(dst_dir):
+            os.makedirs(dst_dir)
 
         shutil.copy2(src, dst)
 
