@@ -1159,7 +1159,7 @@ Tag-File-Character-Encoding: UTF-8
         unsafe_destinations = [
             "../extra.txt",
             "subdir/../../extra.txt",
-            "/tmp/extra.txt",
+            os.path.abspath(os.path.join(self.tmpdir, "..", "extra.txt")),
             "~/.ssh/id_rsa",
         ]
 
