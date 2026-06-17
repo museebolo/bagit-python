@@ -1442,16 +1442,50 @@ Tag-File-Character-Encoding: UTF-8
         with self.assertRaises(ValueError):
             bag.package_as_zipstream(compression="foobar")
 
-    def test_package_as_zipstream_has_paths_to_write(self):
+    def test_payload_property(self):
+        bag = bagit.make_bag(self.tmpdir)
+        payload = bag.payload
+
+        self.assertTrue(payload)
+        self.assertTrue(all(os.path.isabs(path) for path in payload))
+        self.assertTrue(any(path.endswith(os.path.join("data", "README")) for path in payload))
+
+    def test_add_tagfiles(self):
         bag = bagit.make_bag(self.tmpdir)
 
-        try:
-            zstream = bag.package_as_zipstream()
-        except RuntimeError:
-            self.skipTest("zipstream is not installed")
+        tagfile = j(self.tmpdir, "custom-tag.txt")
+        with open(tagfile, "w") as f:
+            f.write("hello")
 
-        self.assertTrue(hasattr(zstream, "paths_to_write"))
-        self.assertGreater(len(zstream.paths_to_write), 0)
+        bag.add_tagfiles(tagfile)
+
+        bag = bagit.Bag(self.tmpdir)
+
+        self.assertTrue(any(path.endswith("custom-tag.txt") for path in bag.tagfiles))
+        self.assertTrue(bag.is_valid())
+
+    def test_add_tagfiles_rejects_payload_file(self):
+        bag = bagit.make_bag(self.tmpdir)
+
+        payload_file = j(self.tmpdir, "data", "README")
+
+        with self.assertRaises(ValueError):
+            bag.add_tagfiles(payload_file)
+
+    def test_remove_tagfiles(self):
+        bag = bagit.make_bag(self.tmpdir)
+
+        tagfile = j(self.tmpdir, "custom-tag.txt")
+        with open(tagfile, "w") as f:
+            f.write("hello")
+
+        bag.add_tagfiles(tagfile)
+        bag.remove_tagfiles(tagfile)
+
+        bag = bagit.Bag(self.tmpdir)
+
+        self.assertFalse(os.path.exists(tagfile))
+        self.assertTrue(bag.is_valid())
 
 
 class TestFetch(SelfCleaningTestCase):

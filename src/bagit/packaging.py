@@ -185,11 +185,8 @@ class BagPackager:
             raise ValueError("compression must be one of None, 'store', or 'deflate'")
 
         zstream = zipstream.ZipFile(mode="w", compression=zip_compression)
-        paths_to_write = []
 
         for fpath, arcname in self._iter_files():
             zstream.write(fpath, arcname)
-            paths_to_write.append(fpath)
 
-        zstream.paths_to_write = paths_to_write
         return zstream

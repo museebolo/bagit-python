@@ -609,6 +609,13 @@ class Bag(object):
 
         self.update_payload(processes=processes)
 
+    @property
+    def payload(self):
+        return sorted(
+            os.path.join(self.path, payload_file)
+            for payload_file in self.payload_files()
+        )
+
     @classmethod
     def convert_directory(cls, path, **kwargs):
         """
@@ -624,6 +631,51 @@ class Bag(object):
             for (key, value) in self.entries.items()
             if not key.startswith("data" + os.sep)
         )
+
+    @property
+    def tagfiles(self):
+        return sorted(
+            os.path.join(self.path, tag_file)
+            for tag_file in self.tagfile_entries()
+        )
+
+    def add_tagfiles(self, *paths, processes=1):
+        """
+        Add tag files to tag manifests.
+        """
+        for path in paths:
+            relpath = os.path.relpath(os.path.abspath(path), self.path)
+
+            if relpath.startswith("data" + os.sep):
+                raise ValueError("Tag files cannot be inside the payload directory")
+
+            if self._path_is_dangerous(relpath):
+                raise ValueError("Tag file path is unsafe: %s" % path)
+
+            if not os.path.isfile(os.path.join(self.path, relpath)):
+                raise ValueError("Tag file does not exist: %s" % path)
+
+        self.save(processes=processes, manifests=False)
+
+    def remove_tagfiles(self, *paths, processes=1):
+        """
+        Remove tag files and update tag manifests.
+        """
+        for path in paths:
+            relpath = os.path.relpath(os.path.abspath(path), self.path)
+
+            if relpath.startswith("data" + os.sep):
+                raise ValueError("Tag files cannot be inside the payload directory")
+
+            if self._path_is_dangerous(relpath):
+                raise ValueError("Tag file path is unsafe: %s" % path)
+
+            full_path = os.path.join(self.path, relpath)
+
+            if os.path.isfile(full_path):
+                os.remove(full_path)
+
+        self.save(processes=processes, manifests=False)
 
     def package_as_tar(self, tarpath, compression="gz"):
         from .packaging import BagPackager
