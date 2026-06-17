@@ -1045,7 +1045,7 @@ Tag-File-Character-Encoding: UTF-8
         self.assertEqual(bag.payload_oxum(), (991765, 5))
 
     def test_payload_oxum_after_payload_change(self):
-        bag = bagit.make_bag(self.tmpdir, checksums=["md5"])
+        bagit.make_bag(self.tmpdir, checksums=["md5"])
 
         with open(j(self.tmpdir, "data", "newfile"), "w") as nf:
             nf.write("newfile")
