@@ -913,14 +913,6 @@ class Bag(object):
 
         total_bytes, total_files = self.payload_oxum()
 
-        #total_bytes = 0
-        #total_files = 0
-        #
-        #for payload_file in self.payload_files():
-        #    payload_file = os.path.join(self.path, payload_file)
-        #    total_bytes += os.stat(payload_file).st_size
-        #    total_files += 1
-
         if oxum_file_count != total_files or oxum_byte_count != total_bytes:
             raise BagValidationError(
                 _(
@@ -1669,7 +1661,7 @@ def main():
                 else:
                     LOGGER.info(_("%s is valid"), bag_dir)
             except BagError as e:
-                LOGGER.error(
+                LOGGER.exception(
                     _("%(bag)s is invalid: %(error)s"), {"bag": bag_dir, "error": e}
                 )
                 rc = 1
@@ -1684,7 +1676,7 @@ def main():
                     checksums=args.checksums,
                 )
             except Exception as exc:
-                LOGGER.error(
+                LOGGER.exception(
                     _("Failed to create bag in %(bag_directory)s: %(error)s"),
                     {"bag_directory": bag_dir, "error": exc},
                     exc_info=True,
