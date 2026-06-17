@@ -163,6 +163,98 @@ The save method takes an optional processes parameter which will
 determine how many processes are used to regenerate the checksums. This
 can be handy on multicore machines.
 
+Payload Management Helpers
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+In addition to manually modifying files in the ``data`` directory and
+calling ``bag.save(manifests=True)``, this fork provides convenience
+helpers for common payload operations.
+
+.. code:: python
+
+    bag = bagit.Bag('/path/to/bag')
+
+    # Rebuild payload manifests and tag manifests
+    bag.update_payload()
+
+    # Add a file to data/newfile.txt
+    bag.add_payload('/tmp/newfile.txt')
+
+    # Add a file to data/images/page001.jpg
+    bag.add_payload('/tmp/page001.jpg', dest='images/page001.jpg')
+
+    # Add a directory recursively
+    bag.add_payload('/tmp/images')
+
+    # Remove a payload file
+    bag.remove_payload('data/images/page001.jpg')
+
+    # Remove a payload directory recursively
+    bag.remove_payload('data/images', recursive=True)
+
+``Bag.payload`` returns the payload files as absolute paths. This is
+provided for compatibility with applications using the legacy API.
+
+.. code:: python
+
+    for path in bag.payload:
+        print(path)
+
+Tag File Helpers
+~~~~~~~~~~~~~~~~
+
+Tag files are files outside the ``data`` payload directory that are
+covered by the tag manifests. This fork provides helpers to update tag
+manifests after creating or removing tag files.
+
+.. code:: python
+
+    bag = bagit.Bag('/path/to/bag')
+
+    # Add or update a tag file
+    bag.add_tagfiles('/path/to/bag/config.yml')
+
+    # Remove a tag file and update tag manifests
+    bag.remove_tagfiles('/path/to/bag/config.yml')
+
+Tag files inside the ``data`` directory are rejected because payload
+files must be tracked by payload manifests, not tag manifests.
+
+Archive Packaging
+~~~~~~~~~~~~~~~~~
+
+This fork also provides archive packaging helpers.
+
+.. code:: python
+
+    bag = bagit.Bag('/path/to/bag')
+
+    bag.package_as_tar('/tmp/bag.tar', compression=None)
+    bag.package_as_tar('/tmp/bag.tar.gz', compression='gz')
+    bag.package_as_tar('/tmp/bag.tar.bz2', compression='bz2')
+    bag.package_as_tar('/tmp/bag.tar.xz', compression='xz')
+
+    bag.package_as_zip('/tmp/bag.zip')
+    bag.package_as_zip('/tmp/bag.zip', compression='store')
+
+Streaming helpers are available for applications that need to stream
+archives over HTTP or to another file-like object.
+
+.. code:: python
+
+    with open('/tmp/bag.tar', 'wb') as fp:
+        bag.package_as_tarstream(fp)
+
+    with open('/tmp/bag.tar.gz', 'wb') as fp:
+        bag.package_as_tarstream(fp, compression='gz')
+
+    zstream = bag.package_as_zipstream(compression=None)
+    for chunk in zstream:
+        response.write(chunk)
+
+``package_as_zipstream()`` requires the optional ``zipstream`` package.
+``package_as_tarstream()`` uses only the Python standard library.
+
 Validation
 ~~~~~~~~~~
 
