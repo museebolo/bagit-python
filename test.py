@@ -628,7 +628,10 @@ class TestBag(SelfCleaningTestCase):
     def test_make_bag_with_empty_directory(self):
         tmpdir = tempfile.mkdtemp()
         try:
-            bagit.make_bag(tmpdir)
+            bag = bagit.make_bag(tmpdir)
+            self.assertTrue(os.path.isfile(os.path.join(tmpdir, "manifest-sha256.txt")))
+            self.assertTrue(os.path.isfile(os.path.join(tmpdir, "manifest-sha512.txt")))
+            self.assertTrue(bag.is_valid())
         finally:
             shutil.rmtree(tmpdir)
 
@@ -1461,6 +1464,21 @@ Tag-File-Character-Encoding: UTF-8
         finally:
             if os.path.exists(zip_path):
                 os.remove(zip_path)
+
+    def test_uncompressed_zipstream_reports_exact_size(self):
+        bag = bagit.make_bag(self.tmpdir)
+
+        try:
+            zstream = bag.package_as_zipstream(compression=None)
+        except RuntimeError:
+            self.skipTest("zipstream-ng is not installed")
+
+        expected_size = len(zstream)
+        archive = b"".join(zstream)
+
+        self.assertEqual(expected_size, len(archive))
+        with zipfile.ZipFile(io.BytesIO(archive)) as zf:
+            self.assertTrue(any(name.endswith("bagit.txt") for name in zf.namelist()))
 
     def test_package_as_zipstream_preserves_payload_for_all_compressions(self):
         bag = bagit.make_bag(self.tmpdir)

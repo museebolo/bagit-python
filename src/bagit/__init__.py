@@ -1441,8 +1441,11 @@ def make_manifests(data_dir, processes, algorithms=DEFAULT_CHECKSUMS, encoding="
     num_files = defaultdict(lambda: 0)
     total_bytes = defaultdict(lambda: 0)
 
-    for algorithm, values in manifest_data.items():
+    for algorithm in algorithms:
+        values = manifest_data.get(algorithm, [])
         manifest_filename = "manifest-%s.txt" % algorithm
+        num_files[algorithm] = 0
+        total_bytes[algorithm] = 0
 
         with open_text_file(manifest_filename, "w", encoding=encoding) as manifest:
             for digest, filename, byte_count in values:

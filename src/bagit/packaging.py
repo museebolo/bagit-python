@@ -186,7 +186,10 @@ class BagPackager:
         else:
             raise ValueError("compression must be one of None, 'store', or 'deflate'")
 
-        zstream = zipstream_cls(compress_type=zip_compression)
+        zstream = zipstream_cls(
+            compress_type=zip_compression,
+            sized=zip_compression == zipstream.ZIP_STORED,
+        )
 
         for fpath, arcname in self._iter_files():
             zstream.add_path(fpath, arcname)
