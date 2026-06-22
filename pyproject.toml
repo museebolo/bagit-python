@@ -24,6 +24,11 @@ requires-python = ">= 3.9"
 [project.scripts]
 "bagit" = "bagit:main"
 
+[project.optional-dependencies]
+zipstream = [
+    "zipstream-ng>=1.9.2",
+]
+
 [project.urls]
 Homepage = "https://libraryofcongress.github.io/bagit-python/"
 
@@ -62,4 +67,5 @@ dev = [
     "coverage>=7.8.2",
     "pytest>=8.4.0",
     "ruff>=0.11.12",
+    "zipstream-ng>=1.9.2",
 ]

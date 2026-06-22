@@ -6,7 +6,7 @@ optional or heavyweight standard-library modules such as:
 
 - tarfile
 - zipfile
-- zipstream (optional)
+- zipstream-ng (optional)
 
 Keeping packaging logic separate from the core Bag implementation
 reduces dependencies and improves maintainability.
@@ -157,24 +157,26 @@ class BagPackager:
 
         Returns
         -------
-        zipstream.ZipFile
+        zipstream.ZipStream
             Iterable object producing ZIP archive chunks.
 
         Raises
         ------
         RuntimeError
-            If the optional ``zipstream`` dependency is not installed.
+            If the optional ``zipstream-ng`` dependency is not installed.
 
         Notes
         -----
-        This feature requires the optional ``zipstream`` package and is
+        This feature requires the optional ``zipstream-ng`` package and is
         primarily intended for HTTP downloads and other streaming use cases.
         """
         try:
             import zipstream
-        except ImportError as exc:
+
+            zipstream_cls = zipstream.ZipStream
+        except (ImportError, AttributeError) as exc:
             raise RuntimeError(
-                "package_as_zipstream() requires the optional zipstream dependency"
+                "package_as_zipstream() requires the optional zipstream-ng dependency"
             ) from exc
 
         if compression in (None, "store"):
@@ -184,9 +186,9 @@ class BagPackager:
         else:
             raise ValueError("compression must be one of None, 'store', or 'deflate'")
 
-        zstream = zipstream.ZipFile(mode="w", compression=zip_compression)
+        zstream = zipstream_cls(compress_type=zip_compression)
 
         for fpath, arcname in self._iter_files():
-            zstream.write(fpath, arcname)
+            zstream.add_path(fpath, arcname)
 
         return zstream

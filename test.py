@@ -5,6 +5,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 import codecs
 import datetime
 import hashlib
+import io
 import logging
 import os
 import shutil
@@ -13,6 +14,7 @@ import sys
 import tempfile
 import unicodedata
 import unittest
+import zipfile
 from os.path import join as j
 
 from unittest import mock
@@ -1400,7 +1402,7 @@ Tag-File-Character-Encoding: UTF-8
         try:
             zstream = bag.package_as_zipstream()
         except RuntimeError:
-            self.skipTest("zipstream is not installed")
+            self.skipTest("zipstream-ng is not installed")
 
         self.assertIsNotNone(zstream)
         self.assertTrue(hasattr(zstream, "__iter__"))
@@ -1411,7 +1413,7 @@ Tag-File-Character-Encoding: UTF-8
         try:
             zstream = bag.package_as_zipstream()
         except RuntimeError:
-            self.skipTest("zipstream is not installed")
+            self.skipTest("zipstream-ng is not installed")
 
         zip_path = tempfile.mktemp(suffix=".zip")
 
@@ -1419,8 +1421,6 @@ Tag-File-Character-Encoding: UTF-8
             with open(zip_path, "wb") as fp:
                 for chunk in zstream:
                     fp.write(chunk)
-
-            import zipfile
 
             with zipfile.ZipFile(zip_path) as zf:
                 names = zf.namelist()
@@ -1431,16 +1431,46 @@ Tag-File-Character-Encoding: UTF-8
             if os.path.exists(zip_path):
                 os.remove(zip_path)
 
+    def test_package_as_zipstream_preserves_payload_for_all_compressions(self):
+        bag = bagit.make_bag(self.tmpdir)
+        payload_path = os.path.join(self.tmpdir, "data", "README")
+
+        with open(payload_path, "rb") as fp:
+            expected_payload = fp.read()
+
+        for compression in (None, "store", "deflate", "gz"):
+            with self.subTest(compression=compression):
+                try:
+                    zstream = bag.package_as_zipstream(compression=compression)
+                except RuntimeError:
+                    self.skipTest("zipstream-ng is not installed")
+
+                archive = io.BytesIO(b"".join(zstream))
+                with zipfile.ZipFile(archive) as zf:
+                    payload_name = next(
+                        name
+                        for name in zf.namelist()
+                        if name.replace("\\", "/").endswith("/data/README")
+                    )
+                    self.assertEqual(expected_payload, zf.read(payload_name))
+
     def test_package_as_zipstream_invalid_compression(self):
         bag = bagit.make_bag(self.tmpdir)
 
         import importlib.util
 
         if importlib.util.find_spec("zipstream") is None:
-            self.skipTest("zipstream is not installed")
+            self.skipTest("zipstream-ng is not installed")
 
         with self.assertRaises(ValueError):
             bag.package_as_zipstream(compression="foobar")
+
+    def test_package_as_zipstream_rejects_legacy_zipstream_package(self):
+        bag = bagit.make_bag(self.tmpdir)
+
+        with mock.patch.dict(sys.modules, {"zipstream": mock.Mock(spec=[])}):
+            with self.assertRaisesRegex(RuntimeError, "zipstream-ng"):
+                bag.package_as_zipstream()
 
     def test_payload_property(self):
         bag = bagit.make_bag(self.tmpdir)

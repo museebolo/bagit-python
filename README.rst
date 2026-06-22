@@ -252,7 +252,8 @@ archives over HTTP or to another file-like object.
     for chunk in zstream:
         response.write(chunk)
 
-``package_as_zipstream()`` requires the optional ``zipstream`` package.
+``package_as_zipstream()`` requires the optional ``zipstream-ng`` package,
+available with ``pip install bagit[zipstream]``.
 ``package_as_tarstream()`` uses only the Python standard library.
 
 Validation
