@@ -1101,11 +1101,7 @@ Tag-File-Character-Encoding: UTF-8
 
         bag = bagit.Bag(self.tmpdir)
 
-        self.assertTrue(
-            os.path.isfile(
-                os.path.join(self.tmpdir, "data", "extra.txt")
-            )
-        )
+        self.assertTrue(os.path.isfile(os.path.join(self.tmpdir, "data", "extra.txt")))
         self.assertTrue(bag.is_valid())
 
     def test_add_payload_updates_oxum(self):
@@ -1282,7 +1278,9 @@ Tag-File-Character-Encoding: UTF-8
             bag.add_payload(src_dir, "imports/sip")
 
             self.assertTrue(os.path.isdir(j(self.tmpdir, "data", "imports", "sip")))
-            self.assertTrue(os.path.isfile(j(self.tmpdir, "data", "imports", "sip", "one.txt")))
+            self.assertTrue(
+                os.path.isfile(j(self.tmpdir, "data", "imports", "sip", "one.txt"))
+            )
 
             bag = bagit.Bag(self.tmpdir)
             self.assertTrue(bag.is_valid())
@@ -1527,7 +1525,9 @@ Tag-File-Character-Encoding: UTF-8
 
         self.assertTrue(payload)
         self.assertTrue(all(os.path.isabs(path) for path in payload))
-        self.assertTrue(any(path.endswith(os.path.join("data", "README")) for path in payload))
+        self.assertTrue(
+            any(path.endswith(os.path.join("data", "README")) for path in payload)
+        )
 
     def test_add_tagfiles(self):
         bag = bagit.make_bag(self.tmpdir)

@@ -538,13 +538,11 @@ class Bag(object):
 
         os.chdir(old_dir)
 
-
     def update_payload(self, processes=1):
         """
         Rebuild payload manifests and tag manifests after payload changes.
         """
         self.save(processes=processes, manifests=True)
-
 
     def add_payload(self, src, dest=None, processes=1):
         """
@@ -558,7 +556,11 @@ class Bag(object):
 
         dest = os.path.normpath(dest)
 
-        if os.path.isabs(dest) or dest.startswith("..") or os.path.expanduser(dest) != dest:
+        if (
+            os.path.isabs(dest)
+            or dest.startswith("..")
+            or os.path.expanduser(dest) != dest
+        ):
             raise ValueError("Payload destination is unsafe: %s" % dest)
 
         payload_dest = os.path.join("data", dest)
@@ -582,7 +584,6 @@ class Bag(object):
             shutil.copytree(src, dst)
 
         self.update_payload(processes=processes)
-
 
     def remove_payload(self, path, processes=1, recursive=False):
         """
@@ -635,8 +636,7 @@ class Bag(object):
     @property
     def tagfiles(self):
         return sorted(
-            os.path.join(self.path, tag_file)
-            for tag_file in self.tagfile_entries()
+            os.path.join(self.path, tag_file) for tag_file in self.tagfile_entries()
         )
 
     def add_tagfiles(self, *paths, processes=1):
@@ -696,7 +696,6 @@ class Bag(object):
         from .packaging import BagPackager
 
         return BagPackager(self).package_as_zipstream(compression=compression)
-
 
     def missing_optional_tagfiles(self):
         """
